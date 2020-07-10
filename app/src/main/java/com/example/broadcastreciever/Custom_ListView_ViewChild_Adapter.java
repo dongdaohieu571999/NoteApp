@@ -15,8 +15,6 @@ import android.widget.PopupWindow;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-
-
 import java.util.List;
 
 public class Custom_ListView_ViewChild_Adapter  extends BaseAdapter {
@@ -59,7 +57,7 @@ public class Custom_ListView_ViewChild_Adapter  extends BaseAdapter {
 
         title.setText(listData.get(position).getTitle());
         date.setText(listData.get(position).getDate());
-        check_view.setVisibility(listData.get(position).isChecked() == true ? View.INVISIBLE : View.VISIBLE);
+        check_view.setVisibility(listData.get(position).isChecked() ? View.INVISIBLE : View.VISIBLE);
 
         linearLayout.setOnClickListener(new View.OnClickListener() {
             @Override
