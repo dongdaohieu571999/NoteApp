@@ -85,7 +85,6 @@ public class Custom_ListView_ViewChild_Adapter  extends BaseAdapter {
         });
 
 
-
         return convertView;
     }
     private void setPopUpWindow() {
