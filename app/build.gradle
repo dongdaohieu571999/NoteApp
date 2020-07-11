@@ -35,4 +35,6 @@ dependencies {
     implementation 'pl.droidsonroids.gif:android-gif-drawable:1.2.3'
     implementation 'com.google.android.material:material:1.0.0-rc01'
     implementation 'com.sothree.slidinguppanel:library:3.4.0'
+    implementation'com.squareup.okhttp3:mockwebserver:4.2.0'
+    implementation'com.squareup.okhttp3:okhttp:4.2.0'
 }
