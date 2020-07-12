@@ -20,7 +20,12 @@
         sothree:umanoShadowHeight="0dp"
         sothree:umanoDragView="@+id/dragView"
         sothree:umanoOverlay="true">
+        <LinearLayout
+            android:id="@+id/scroll"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
         <ScrollView
+
             android:layout_width="match_parent"
             android:layout_height="match_parent">
         <LinearLayout
@@ -126,8 +131,9 @@
                 android:layout_height="wrap_content"/>
 
 
-        </LinearLayout>
+            </LinearLayout>
         </ScrollView>
+        </LinearLayout>
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="350dp"

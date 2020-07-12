@@ -23,11 +23,15 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.StrictMode;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.CalendarView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import java.io.IOException;
@@ -62,6 +66,7 @@ public class MainActivity extends AppCompatActivity {
     private LinearLayout drag;
     private TextView forecast;
     private GifImageView iconWeather;
+    private LinearLayout scroll;
     FloatingActionButton floatingActionButton;
     private int i = 0;
     LocationManager locationManager;
@@ -80,6 +85,7 @@ public class MainActivity extends AppCompatActivity {
         forecast = findViewById(R.id.forecast);
         iconWeather = findViewById(R.id.iconWeather);
         floatingActionButton = findViewById(R.id.fab);
+        scroll = findViewById(R.id.scroll);
         sliding_layout.setScrollableView(listView);
         sliding_layout.setFadeOnClickListener(new View.OnClickListener() {
             @Override
@@ -108,10 +114,14 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 loadingWeather();
-
                 forecast.setText("");
             }
         });
+
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        SlidingUpPanelLayout.LayoutParams params = (SlidingUpPanelLayout.LayoutParams) scroll.getLayoutParams();
+        params.height = displayMetrics.heightPixels-(35+38);
 
 
     }
@@ -153,7 +163,6 @@ public class MainActivity extends AppCompatActivity {
                         editor.putString("longtitude",lon+"");
                         editor.commit();
                         getCurrenLocation(lat + "", lon + "");
-                        locationManager.removeUpdates(locationListener);
                     } else {
                         if(!sharedPreferences.getString("lattitude","0").equals("0")){
                             getCurrenLocation(sharedPreferences.getString("lattitude","0"), sharedPreferences.getString("longtitude","0"));
