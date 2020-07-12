@@ -1,18 +1,23 @@
 package com.example.broadcastreciever;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.DownloadManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentSender;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
+import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -31,18 +36,22 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.ResolvableApiException;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResponse;
+import com.google.android.gms.location.LocationSettingsStates;
+import com.google.android.gms.location.LocationSettingsStatusCodes;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
-import org.jetbrains.annotations.NotNull;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
 import pl.droidsonroids.gif.GifImageView;
 
 public class MainActivity extends AppCompatActivity {
@@ -55,7 +64,9 @@ public class MainActivity extends AppCompatActivity {
     private GifImageView iconWeather;
     FloatingActionButton floatingActionButton;
     private int i = 0;
-    List<String> locationList;
+    LocationManager locationManager;
+    LocationListener locationListener;
+    double lon, lat;
 
     @SuppressLint("ResourceType")
     @Override
@@ -92,43 +103,147 @@ public class MainActivity extends AppCompatActivity {
         Custom_ListView_ViewChild_Adapter adapter = new Custom_ListView_ViewChild_Adapter(listNote, R.layout.custom_item_listview, MainActivity.this);
         listView.setAdapter(adapter);
 
-            if (ContextCompat.checkSelfPermission(
-                    MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) ==
-                    PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(
-                    MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) ==
-                    PackageManager.PERMISSION_GRANTED) {
-            } else {
-                this.requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION},100);
-            }
-
-        LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        Location location = lm.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER);
-        double longitude = location.getLongitude();
-        double latitude = location.getLatitude();
-        getCurrenLocation(latitude+","+longitude);
-        final String position = latitude+","+longitude;
+        loadingWeather();
         iconWeather.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String url = "https://dataservice.accuweather.com/locations/v1/cities/geoposition/search?apikey="+getResources().getString(R.string.apiKey)+"&q="+position;
-                new Asy(MainActivity.this,forecast,iconWeather).execute(url);
+                loadingWeather();
+
+                forecast.setText("");
             }
         });
+
+
+    }
+
+    public void loadAllNote(View view) {
+        Intent intent = new Intent(getApplicationContext(), SearchAll.class);
+        startActivity(intent);
+    }
+
+    public void writeNote(View view) {
+        Intent intent = new Intent(getApplicationContext(), WriteNote.class);
+        startActivity(intent);
+    }
+
+    public void getCurrenLocation(String lat, String lon) {
+        String url = "https://api.openweathermap.org/data/2.5/weather?lat=" + lat + "&lon=" + lon + "&appid=" + getResources().getString(R.string.apiKey) + "&units=metric";
+        new Asy(this, forecast, iconWeather).execute(url);
+    }
+
+    public void loadingWeather() {
+        LocationRequest locationRequest = LocationRequest.create();
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder().addLocationRequest(locationRequest);
+
+        Task<LocationSettingsResponse> result =
+                LocationServices.getSettingsClient(this).checkLocationSettings(builder.build());
+
+
+        result.addOnCompleteListener(new OnCompleteListener<LocationSettingsResponse>() {
+            @Override
+            public void onComplete(@NonNull Task<LocationSettingsResponse> task) {
+                try {
+                    LocationSettingsResponse response = task.getResult(ApiException.class);
+                    getLocation();
+                    SharedPreferences sharedPreferences = MainActivity.this.getSharedPreferences("locationSetting",Context.MODE_PRIVATE);
+                    if (lat != 0 && lon != 0) {
+                        SharedPreferences.Editor editor = sharedPreferences.edit();
+                        editor.putString("lattitude",lat+"");
+                        editor.putString("longtitude",lon+"");
+                        editor.commit();
+                        getCurrenLocation(lat + "", lon + "");
+                        locationManager.removeUpdates(locationListener);
+                    } else {
+                        if(!sharedPreferences.getString("lattitude","0").equals("0")){
+                            getCurrenLocation(sharedPreferences.getString("lattitude","0"), sharedPreferences.getString("longtitude","0"));
+                            locationManager.removeUpdates(locationListener);
+                        } else {
+                            forecast.setText("Retry again!");
+                        }
+
+                    }
+
+                    } catch (ApiException exception) {
+                        switch (exception.getStatusCode()) {
+                            case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+                                // Location settings are not satisfied. But could be fixed by showing the
+                                // user a dialog.
+                                try {
+                                    // Cast to a resolvable exception.
+                                    ResolvableApiException resolvable = (ResolvableApiException) exception;
+                                    // Show the dialog by calling startResolutionForResult(),
+                                    // and check the result in onActivityResult().
+                                    resolvable.startResolutionForResult(
+                                            MainActivity.this,
+                                            LocationRequest.PRIORITY_HIGH_ACCURACY);
+                                } catch (IntentSender.SendIntentException e) {
+                                } catch (ClassCastException e) {
+                                }
+                                break;
+                            case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
+                                break;
+                        }
+                    }
+                    forecast.setText("Retry again!");
+                }
+            });
+
         }
 
-        public void loadAllNote(View view){
-            Intent intent = new Intent(getApplicationContext(),SearchAll.class);
-            startActivity(intent);
+        public void callPermisstion(){
+            this.requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION},100);
         }
 
-        public void writeNote(View view){
-            Intent intent = new Intent(getApplicationContext(),WriteNote.class);
-            startActivity(intent);
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        switch (requestCode) {
+            case LocationRequest.PRIORITY_HIGH_ACCURACY:
+                switch (resultCode) {
+                    case Activity.RESULT_OK:
+                        break;
+                    case Activity.RESULT_CANCELED:
+                        break;
+                    default:
+                        break;
+                }
+                break;
         }
+    }
 
-        public void getCurrenLocation(String position){
-            String url = "https://dataservice.accuweather.com/locations/v1/cities/geoposition/search?apikey="+getResources().getString(R.string.apiKey)+"&q="+position;
-            new Asy(this,forecast,iconWeather).execute(url);
+    public void getLocation(){
+        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        locationListener = new LocationListener() {
+            @Override
+            public void onLocationChanged(Location location) {
+                lon = location.getLongitude();
+                lat = location.getLatitude();
+            }
+
+            @Override
+            public void onStatusChanged(String provider, int status, Bundle extras) {
+
+            }
+
+            @Override
+            public void onProviderEnabled(String provider) {
+
+            }
+
+            @Override
+            public void onProviderDisabled(String provider) {
+
+            }
+        };
+        if (ContextCompat.checkSelfPermission(
+                MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) ==
+                PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(
+                MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) ==
+                PackageManager.PERMISSION_GRANTED) {
+            locationManager.requestLocationUpdates("gps",5000,0,locationListener);
+        } else {
+            callPermisstion();
         }
-
+    }
 }

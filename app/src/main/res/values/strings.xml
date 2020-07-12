@@ -2,67 +2,42 @@
     <string name="app_name">ModernLogin</string>
     <string name="login_email_hint">Email</string>
     <string name="login_password_hint">Password</string>
-    <string name="apiKey">5EzNTZGSPlovwgOmolZfJDHFJawvw4rp</string>
+    <string name="apiKey">ceb7a4a6dbaafba4b916761d1547a376</string>
 
     <string-array name="sunny">
-        <item>1</item>
-        <item>2</item>
-        <item>3</item>
-        <item>4</item>
-        <item>5</item>
+        <item>01d</item>
+        <item>02d</item>
+        <item>01n</item>
+        <item>02n</item>
     </string-array>
     
     <string-array name="cloudy">
-        <item>6</item>
-        <item>7</item>
-        <item>8</item>
-        <item>11</item>
+        <item>03d</item>
+        <item>04d</item>
+        <item>03n</item>
+        <item>04n</item>
     </string-array>
 
     <string-array name="rain">
-        <item>12</item>
-        <item>13</item>
-        <item>14</item>
-        <item>15</item>
-        <item>16</item>
-        <item>17</item>
-        <item>18</item>
-        <item>25</item>
-        <item>26</item>
-        <item>29</item>
-        <item>39</item>
-        <item>40</item>
+        <item>09d</item>
+        <item>10d</item>
+        <item>09n</item>
+        <item>10n</item>
     </string-array>
     
     <string-array name="storm">
-        <item>19</item>
-        <item>20</item>
-        <item>21</item>
-        <item>41</item>
-        <item>42</item>
+        <item>11d</item>
+        <item>20n</item>
     </string-array>
 
     <string-array name="snow">
-        <item>22</item>
-        <item>23</item>
-        <item>24</item>
-        <item>31</item>
-    </string-array>
-
-    <string-array name="hot">
-        <item>30</item>
+        <item>13d</item>
+        <item>13n</item>
     </string-array>
     
     <string-array name="windy">
-        <item>32</item>
-        <item>33</item>
-        <item>34</item>
-        <item>35</item>
-        <item>36</item>
-        <item>37</item>
-        <item>38</item>
-        <item>43</item>
-        <item>44</item>
+        <item>50d</item>
+        <item>50n</item>
     </string-array>
     
 </resources>
