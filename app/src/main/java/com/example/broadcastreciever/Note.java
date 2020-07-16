@@ -1,6 +1,7 @@
 package com.example.broadcastreciever;
 
 public class Note {
+    private String id;
     private String title;
     private String date;
     private String content;
@@ -23,9 +24,23 @@ public class Note {
         this.checked = checked;
     }
 
+    public Note(String id,String title, String date, String content, int color, boolean checked) {
+        this.id = id;
+        this.title = title;
+        this.date = date;
+        this.content = content;
+        this.color = color;
+        this.checked = checked;
+    }
+
     public String getTitle() {
         return title;
     }
+
+    public String getId() {
+        return id;
+    }
+
 
     public void setTitle(String title) {
         this.title = title;

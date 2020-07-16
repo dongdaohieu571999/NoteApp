@@ -57,7 +57,8 @@ public class SearchAll extends AppCompatActivity {
                 if (s != null) {
                     searchList.clear();
                     for (Note note : listNote) {
-                        if (note.getTitle().contains(s.toLowerCase()) || note.getTitle().contains(s.toUpperCase())) {
+                        String result = note.getTitle().replaceAll(s,"*");
+                        if (result.contains("*")) {
                             searchList.add(note);
                         }
                     }
@@ -85,12 +86,13 @@ public class SearchAll extends AppCompatActivity {
             public void onComplete(@NonNull Task<QuerySnapshot> task) {
                 if (task.isSuccessful()) {
                     for (QueryDocumentSnapshot doc : task.getResult()) {
+                        String id = doc.getId();
                         String title = doc.get("title").toString();
                         String date = doc.get("date").toString();
                         String content = doc.get("content").toString();
                         int color = Color.GREEN;
                         boolean checked = Boolean.parseBoolean(doc.get("checked").toString());
-                        Note note = new Note(title, date, content, color, checked);
+                        Note note = new Note(id,title, date, content, color, checked);
                         listNote.add(note);
                     }
                     Custom_ListView_ViewChild_Adapter adapter = new Custom_ListView_ViewChild_Adapter(listNote, R.layout.custom_item_listview, SearchAll.this);
@@ -99,5 +101,4 @@ public class SearchAll extends AppCompatActivity {
             }
         });
     }
-
 }
