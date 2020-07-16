@@ -104,7 +104,7 @@ public class MainActivity extends AppCompatActivity {
         calendarView.setOnDateChangeListener(new CalendarView.OnDateChangeListener() {
             @Override
             public void onSelectedDayChange(@NonNull CalendarView view, int year, int month, int dayOfMonth) {
-                getDailyNotes();
+                setDailyNotes(dayOfMonth,month,year);
                 sliding_layout.setPanelState(SlidingUpPanelLayout.PanelState.EXPANDED);
             }
         });
@@ -259,7 +259,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
     public void getDailyNotes() {
         listNote = new ArrayList<Note>();
         dailyNotes = new ArrayList<Note>();
@@ -279,18 +278,33 @@ public class MainActivity extends AppCompatActivity {
                     }
                     DateFormat simpleDateFormat = new SimpleDateFormat("dd/MM/yyyy");
                     String s = simpleDateFormat.format(calendarView.getDate());
-
+                    dailyNotes.clear();
                     for (Note note : listNote){
                         if (note.getDate().equals(s)){
                             dailyNotes.add(note);
                         }
                     }
                     Custom_ListView_ViewChild_Adapter adapter = new Custom_ListView_ViewChild_Adapter(dailyNotes,
-                            R.layout.custom_item_listview, getApplicationContext());
+                            R.layout.custom_item_listview, MainActivity.this);
                     listView.setAdapter(adapter);
                 }
             }
         });
+    }
+
+    public void setDailyNotes(int day,int month, int year){
+        dailyNotes = new ArrayList<Note>();
+        dailyNotes.clear();
+        for (Note note : listNote){
+            String date = note.getDate();
+            String[] temp = date.split("/");
+            if ( (Integer.parseInt(temp[0]) == day) && (Integer.parseInt(temp[1]) == month+1) && (Integer.parseInt(temp[2]) == year) ){
+                dailyNotes.add(note);
+            }
+        }
+        Custom_ListView_ViewChild_Adapter adapter = new Custom_ListView_ViewChild_Adapter(dailyNotes,
+                R.layout.custom_item_listview, MainActivity.this);
+        listView.setAdapter(adapter);
     }
 
 }
