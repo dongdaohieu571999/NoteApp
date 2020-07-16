@@ -31,6 +31,8 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -50,6 +52,9 @@ import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import pl.droidsonroids.gif.GifImageView;
@@ -59,6 +64,9 @@ public class MainActivity extends AppCompatActivity {
     private ListView listView;
     private CalendarView calendarView;
     private List<Note> listNote;
+
+    private List<Note> dailyNotes;
+
     private LinearLayout drag;
     private TextView forecast;
     private GifImageView iconWeather;
@@ -94,14 +102,9 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        Note note = new Note("Hôm nay ăn gì?", "22/06", "khong biet", Color.RED, false);
-        listNote = new ArrayList<Note>();
-        for (int i = 0; i < 100; i++) {
-            listNote.add(note);
-        }
 
-        Custom_ListView_ViewChild_Adapter adapter = new Custom_ListView_ViewChild_Adapter(listNote, R.layout.custom_item_listview, MainActivity.this);
-        listView.setAdapter(adapter);
+        getAllNotes();
+
 
         loadingWeather();
         iconWeather.setOnClickListener(new View.OnClickListener() {
@@ -146,17 +149,17 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     LocationSettingsResponse response = task.getResult(ApiException.class);
                     getLocation();
-                    SharedPreferences sharedPreferences = MainActivity.this.getSharedPreferences("locationSetting",Context.MODE_PRIVATE);
+                    SharedPreferences sharedPreferences = MainActivity.this.getSharedPreferences("locationSetting", Context.MODE_PRIVATE);
                     if (lat != 0 && lon != 0) {
                         SharedPreferences.Editor editor = sharedPreferences.edit();
-                        editor.putString("lattitude",lat+"");
-                        editor.putString("longtitude",lon+"");
+                        editor.putString("lattitude", lat + "");
+                        editor.putString("longtitude", lon + "");
                         editor.commit();
                         getCurrenLocation(lat + "", lon + "");
                         locationManager.removeUpdates(locationListener);
                     } else {
-                        if(!sharedPreferences.getString("lattitude","0").equals("0")){
-                            getCurrenLocation(sharedPreferences.getString("lattitude","0"), sharedPreferences.getString("longtitude","0"));
+                        if (!sharedPreferences.getString("lattitude", "0").equals("0")) {
+                            getCurrenLocation(sharedPreferences.getString("lattitude", "0"), sharedPreferences.getString("longtitude", "0"));
                             locationManager.removeUpdates(locationListener);
                         } else {
                             forecast.setText("Retry again!");
@@ -164,36 +167,36 @@ public class MainActivity extends AppCompatActivity {
 
                     }
 
-                    } catch (ApiException exception) {
-                        switch (exception.getStatusCode()) {
-                            case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
-                                // Location settings are not satisfied. But could be fixed by showing the
-                                // user a dialog.
-                                try {
-                                    // Cast to a resolvable exception.
-                                    ResolvableApiException resolvable = (ResolvableApiException) exception;
-                                    // Show the dialog by calling startResolutionForResult(),
-                                    // and check the result in onActivityResult().
-                                    resolvable.startResolutionForResult(
-                                            MainActivity.this,
-                                            LocationRequest.PRIORITY_HIGH_ACCURACY);
-                                } catch (IntentSender.SendIntentException e) {
-                                } catch (ClassCastException e) {
-                                }
-                                break;
-                            case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
-                                break;
-                        }
+                } catch (ApiException exception) {
+                    switch (exception.getStatusCode()) {
+                        case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+                            // Location settings are not satisfied. But could be fixed by showing the
+                            // user a dialog.
+                            try {
+                                // Cast to a resolvable exception.
+                                ResolvableApiException resolvable = (ResolvableApiException) exception;
+                                // Show the dialog by calling startResolutionForResult(),
+                                // and check the result in onActivityResult().
+                                resolvable.startResolutionForResult(
+                                        MainActivity.this,
+                                        LocationRequest.PRIORITY_HIGH_ACCURACY);
+                            } catch (IntentSender.SendIntentException e) {
+                            } catch (ClassCastException e) {
+                            }
+                            break;
+                        case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
+                            break;
                     }
-                    forecast.setText("Retry again!");
                 }
-            });
+                forecast.setText("Retry again!");
+            }
+        });
 
-        }
+    }
 
-        public void callPermisstion(){
-            this.requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION},100);
-        }
+    public void callPermisstion() {
+        this.requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 100);
+    }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -212,7 +215,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void getLocation(){
+    public void getLocation() {
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         locationListener = new LocationListener() {
             @Override
@@ -241,9 +244,43 @@ public class MainActivity extends AppCompatActivity {
                 PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(
                 MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) ==
                 PackageManager.PERMISSION_GRANTED) {
-            locationManager.requestLocationUpdates("gps",5000,0,locationListener);
+            locationManager.requestLocationUpdates("gps", 5000, 0, locationListener);
         } else {
             callPermisstion();
         }
     }
+
+
+    public void getAllNotes() {
+        listNote = new ArrayList<Note>();
+        FirebaseFirestore firestore = FirebaseFirestore.getInstance();
+        firestore.collection("notes").get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                if (task.isSuccessful()) {
+                    for (QueryDocumentSnapshot doc : task.getResult()) {
+                        String title = doc.get("title").toString();
+                        String date = doc.get("date").toString();
+                        String content = doc.get("content").toString();
+                        int color = Color.GREEN;
+                        boolean checked = Boolean.parseBoolean(doc.get("checked").toString());
+                        Note note = new Note(title, date, content, color, checked);
+                        listNote.add(note);
+                    }
+                    DateFormat simpleDateFormat = new SimpleDateFormat("dd/MM/yyyy");
+                    String s = simpleDateFormat.format(calendarView.getDate());
+                    dailyNotes = new ArrayList<Note>();
+                    for (Note note : listNote){
+                        if (note.getDate().equals(s)){
+                            dailyNotes.add(note);
+                        }
+                    }
+                    Custom_ListView_ViewChild_Adapter adapter = new Custom_ListView_ViewChild_Adapter(dailyNotes,
+                            R.layout.custom_item_listview, getApplicationContext());
+                    listView.setAdapter(adapter);
+                }
+            }
+        });
+    }
+
 }
