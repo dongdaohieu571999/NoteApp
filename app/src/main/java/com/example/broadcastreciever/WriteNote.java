@@ -46,6 +46,7 @@ public class WriteNote extends AppCompatActivity {
     }
 
     public void saveAndBack(View view){
+
         finish();
     }
 

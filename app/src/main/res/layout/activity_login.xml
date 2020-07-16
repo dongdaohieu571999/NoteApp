@@ -43,11 +43,11 @@
                 android:layout_height="wrap_content">
                 <EditText
                     android:layout_marginTop="@dimen/loginViewsMargin"
-                    android:id="@+id/editTextEmail"
+                    android:id="@+id/editTextUser"
                     style="@style/modifiedEditText"
                     android:inputType="textEmailAddress"
                     android:maxLines="1"
-                    android:hint="@string/login_email_hint"/>
+                    android:hint="User"/>
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
@@ -76,7 +76,7 @@
                 app:spinning_bar_width="4dp"
                 app:spinning_bar_color="#FFF"
                 android:text="Login"
-                android:onClick="moveToMain"
+                android:onClick="login"
                 android:layout_gravity="center_horizontal"
                 android:layout_marginTop="@dimen/loginViewsMargin"
                 app:spinning_bar_padding="6dp"
