@@ -104,12 +104,12 @@ public class MainActivity extends AppCompatActivity {
         calendarView.setOnDateChangeListener(new CalendarView.OnDateChangeListener() {
             @Override
             public void onSelectedDayChange(@NonNull CalendarView view, int year, int month, int dayOfMonth) {
+                getDailyNotes();
                 sliding_layout.setPanelState(SlidingUpPanelLayout.PanelState.EXPANDED);
             }
         });
 
-
-        getAllNotes();
+        getDailyNotes();
 
 
         loadingWeather();
@@ -260,8 +260,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    public void getAllNotes() {
+    public void getDailyNotes() {
         listNote = new ArrayList<Note>();
+        dailyNotes = new ArrayList<Note>();
         FirebaseFirestore firestore = FirebaseFirestore.getInstance();
         firestore.collection("notes").get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
             @Override
@@ -278,7 +279,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                     DateFormat simpleDateFormat = new SimpleDateFormat("dd/MM/yyyy");
                     String s = simpleDateFormat.format(calendarView.getDate());
-                    dailyNotes = new ArrayList<Note>();
+
                     for (Note note : listNote){
                         if (note.getDate().equals(s)){
                             dailyNotes.add(note);
