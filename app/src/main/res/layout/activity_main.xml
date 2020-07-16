@@ -20,7 +20,12 @@
         sothree:umanoShadowHeight="0dp"
         sothree:umanoDragView="@+id/dragView"
         sothree:umanoOverlay="true">
+        <LinearLayout
+            android:id="@+id/scroll"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
         <ScrollView
+
             android:layout_width="match_parent"
             android:layout_height="match_parent">
         <LinearLayout
@@ -66,22 +71,29 @@
                         android:format24Hour="dd/MM/yyyy"
                         android:format12Hour="dd/MM/yyyy"/>
                 </LinearLayout>
-                <LinearLayout
+                <RelativeLayout
                     android:layout_width="match_parent"
                     android:gravity="right"
+                    android:layout_height="wrap_content">
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:gravity="center"
                     android:orientation="vertical"
                     android:layout_height="wrap_content">
                     <pl.droidsonroids.gif.GifImageView
                         android:id="@+id/iconWeather"
                         android:layout_width="100dp"
                         android:layout_height="100dp"
-                        android:foregroundGravity="right"
-                        android:src="@raw/normal"/>
+                        android:src="@raw/reload"
+                        android:foregroundGravity="right"/>
                     <TextView
+                        android:id="@+id/forecast"
+                        android:text="Retry again!"
+                        android:layout_gravity="center"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Hà Nội: 33°C\nĐộ ẩm: 30% "/>
+                        android:layout_height="wrap_content"/>
                 </LinearLayout>
+                </RelativeLayout>
             </LinearLayout>
             <LinearLayout
                 android:layout_width="match_parent"
@@ -119,8 +131,9 @@
                 android:layout_height="wrap_content"/>
 
 
-        </LinearLayout>
+            </LinearLayout>
         </ScrollView>
+        </LinearLayout>
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="350dp"

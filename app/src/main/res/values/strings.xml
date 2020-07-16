@@ -2,5 +2,42 @@
     <string name="app_name">ModernLogin</string>
     <string name="login_email_hint">Email</string>
     <string name="login_password_hint">Password</string>
+    <string name="apiKey">ceb7a4a6dbaafba4b916761d1547a376</string>
 
+    <string-array name="sunny">
+        <item>01d</item>
+        <item>02d</item>
+        <item>01n</item>
+        <item>02n</item>
+    </string-array>
+    
+    <string-array name="cloudy">
+        <item>03d</item>
+        <item>04d</item>
+        <item>03n</item>
+        <item>04n</item>
+    </string-array>
+
+    <string-array name="rain">
+        <item>09d</item>
+        <item>10d</item>
+        <item>09n</item>
+        <item>10n</item>
+    </string-array>
+    
+    <string-array name="storm">
+        <item>11d</item>
+        <item>20n</item>
+    </string-array>
+
+    <string-array name="snow">
+        <item>13d</item>
+        <item>13n</item>
+    </string-array>
+    
+    <string-array name="windy">
+        <item>50d</item>
+        <item>50n</item>
+    </string-array>
+    
 </resources>
