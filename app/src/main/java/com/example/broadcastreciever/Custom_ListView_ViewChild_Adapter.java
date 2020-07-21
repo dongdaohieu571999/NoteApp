@@ -81,53 +81,61 @@ public class Custom_ListView_ViewChild_Adapter  extends BaseAdapter {
 
                 if(listData.get(position).isChecked()){
                     final AlertDialog alertDialog = new AlertDialog.Builder(context).create();
-                    final SharedPreferences sharedPreferences = context.getSharedPreferences("settingdata", Context.MODE_PRIVATE);
+                    SharedPreferences sharedPreferences = context.getSharedPreferences("settingdata", Context.MODE_PRIVATE);
+                    SharedPreferences.Editor editor = sharedPreferences.edit();
+                    if (sharedPreferences.getString("fingerRead","").equals("") || sharedPreferences.getString("fingerRead","").equals("no")){
+                        alertDialog.setTitle("Alert");
+                        alertDialog.setMessage("You need to enable finger print access for this action!");
+                        alertDialog.setIcon(R.drawable.icon);
+                        alertDialog.show();
+                        return;
+                    } else {
+                        BiometricManager biometricManager = BiometricManager.from(context);
+                        switch (biometricManager.canAuthenticate()) {
+                            case BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE: {
+                                alertDialog.setTitle("ERROR");
+                                alertDialog.setMessage("YOUR DEVICE HAVE NO SCANNER PRINT");
+                                alertDialog.show();
+                                break;
+                            }
+                            case BiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE: {
+                                alertDialog.setTitle("ERROR");
+                                alertDialog.setMessage("YOUR SCANNER PRINT UNAVAILABLE");
+                                alertDialog.show();
+                                break;
+                            }
+                            case BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED: {
+                                alertDialog.setTitle("ERROR");
+                                alertDialog.setMessage("YOUR DEVICE HAVE NO FINGER, PLEASE ADD MORE FINGER PRINT");
+                                alertDialog.show();
+                                break;
+                            }
+                        }
 
-                    BiometricManager biometricManager = BiometricManager.from(context);
-                    switch (biometricManager.canAuthenticate()) {
-                        case BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE: {
-                            alertDialog.setTitle("ERROR");
-                            alertDialog.setMessage("YOUR DEVICE HAVE NO SCANNER PRINT");
-                            alertDialog.show();
-                            break;
-                        }
-                        case BiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE: {
-                            alertDialog.setTitle("ERROR");
-                            alertDialog.setMessage("YOUR SCANNER PRINT UNAVAILABLE");
-                            alertDialog.show();
-                            break;
-                        }
-                        case BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED: {
-                            alertDialog.setTitle("ERROR");
-                            alertDialog.setMessage("YOUR DEVICE HAVE NO FINGER, PLEASE ADD MORE FINGER PRINT");
-                            alertDialog.show();
-                            break;
-                        }
+                        Executor executor = ContextCompat.getMainExecutor(context);
+                        final BiometricPrompt biometricPrompt = new BiometricPrompt((FragmentActivity) context, executor, new BiometricPrompt.AuthenticationCallback() {
+                            @Override
+                            public void onAuthenticationError(int errorCode, @NonNull CharSequence errString) {
+                                super.onAuthenticationError(errorCode, errString);
+                            }
+
+                            @Override
+                            public void onAuthenticationSucceeded(@NonNull BiometricPrompt.AuthenticationResult result) {
+                                moveToWriteNote(position);
+                            }
+
+                            @Override
+                            public void onAuthenticationFailed() {
+                                super.onAuthenticationFailed();
+                            }
+                        });
+                        final BiometricPrompt.PromptInfo promptInfo = new BiometricPrompt.PromptInfo.Builder()
+                                .setTitle("REQUIRE ACCESS")
+                                .setDescription("place your finger print to scanner")
+                                .setNegativeButtonText("NO THANK")
+                                .build();
+                        biometricPrompt.authenticate(promptInfo);
                     }
-
-                    Executor executor = ContextCompat.getMainExecutor(context);
-                    final BiometricPrompt biometricPrompt = new BiometricPrompt((FragmentActivity) context, executor, new BiometricPrompt.AuthenticationCallback() {
-                        @Override
-                        public void onAuthenticationError(int errorCode, @NonNull CharSequence errString) {
-                            super.onAuthenticationError(errorCode, errString);
-                        }
-
-                        @Override
-                        public void onAuthenticationSucceeded(@NonNull BiometricPrompt.AuthenticationResult result) {
-                            moveToWriteNote(position);
-                        }
-
-                        @Override
-                        public void onAuthenticationFailed() {
-                            super.onAuthenticationFailed();
-                        }
-                    });
-                    final BiometricPrompt.PromptInfo promptInfo = new BiometricPrompt.PromptInfo.Builder()
-                            .setTitle("REQUIRE ACCESS")
-                            .setDescription("place your finger print to scanner")
-                            .setNegativeButtonText("NO THANK")
-                            .build();
-                    biometricPrompt.authenticate(promptInfo);
 
                 } else {
                     moveToWriteNote(position);

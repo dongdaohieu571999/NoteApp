@@ -23,86 +23,24 @@ public class Setting extends AppCompatActivity {
     Switch login_finger,read_finger;
     Button log_out;
     AlertDialog.Builder builder;
+    SharedPreferences sharedPreferences;
+    SharedPreferences.Editor editor;
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.setting_activity);
-        final SharedPreferences sharedPreferences = Setting.this.getSharedPreferences("settingdata", Context.MODE_PRIVATE);
-        final AlertDialog alertDialog = new AlertDialog.Builder(Setting.this).create();
-        final SharedPreferences.Editor editor = sharedPreferences.edit();
+
+        sharedPreferences = Setting.this.getSharedPreferences("settingdata", Context.MODE_PRIVATE);
+        editor = sharedPreferences.edit();
+
         builder= new AlertDialog.Builder(this);
         map();
         login_finger.setChecked(sharedPreferences.getString("fingerLogin","").equals("yes") ? true : false);
-        login_finger.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if(isChecked){
-                    BiometricManager biometricManager = BiometricManager.from(Setting.this);
-                    switch (biometricManager.canAuthenticate()) {
-                        case BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE: {
-                            alertDialog.setTitle("ERROR");
-                            alertDialog.setMessage("YOUR DEVICE HAVE NO SCANNER PRINT");
-                            alertDialog.show();
-                            break;
-                        }
-                        case BiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE: {
-                            alertDialog.setTitle("ERROR");
-                            alertDialog.setMessage("YOUR SCANNER PRINT UNAVAILABLE");
-                            alertDialog.show();
-                            break;
-                        }
-                        case BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED: {
-                            alertDialog.setTitle("ERROR");
-                            alertDialog.setMessage("YOUR DEVICE HAVE NO FINGER, PLEASE ADD MORE FINGER PRINT");
-                            alertDialog.show();
-                            break;
-                        }
-                    }
-                    Executor executor = ContextCompat.getMainExecutor(Setting.this);
-                    final BiometricPrompt biometricPrompt = new BiometricPrompt(Setting.this, executor, new BiometricPrompt.AuthenticationCallback() {
-                        @Override
-                        public void onAuthenticationError(int errorCode, @NonNull CharSequence errString) {
-                            login_finger.setChecked(false);
-                            editor.putString("fingerLogin","no");
-                            editor.apply();
-                        }
+        read_finger.setChecked(sharedPreferences.getString("fingerRead","").equals("yes") ? true : false);
 
-                        @Override
-                        public void onAuthenticationSucceeded(@NonNull BiometricPrompt.AuthenticationResult result) {
-                            editor.putString("fingerLogin","yes");
-                            editor.apply();
-                        }
+        fingerAccess(login_finger,"fingerLogin");
 
-                        @Override
-                        public void onAuthenticationFailed() {
-                        }
-                    });
-                    final BiometricPrompt.PromptInfo promptInfo = new BiometricPrompt.PromptInfo.Builder()
-                            .setTitle("ALERT")
-                            .setDescription("place your finger print to scanner")
-                            .setNegativeButtonText("NO THANK")
-                            .build();
-                    biometricPrompt.authenticate(promptInfo);
-
-                } else {
-                    editor.putString("fingerLogin","no");
-                    editor.apply();
-                }
-
-            }
-        });
-
-        read_finger.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if(!isChecked){
-                    editor.putString("fingerRead","yes");
-                } else {
-                    editor.putString("fingerRead","no");
-                }
-                editor.apply();
-            }
-        });
+        fingerAccess(read_finger,"fingerRead");
 
         log_out.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -132,6 +70,68 @@ public class Setting extends AppCompatActivity {
         login_finger = findViewById(R.id.switch_login_finger);
         read_finger = findViewById(R.id.switch_read_finger);
         log_out = findViewById(R.id.log_out);
+    }
+
+    public void fingerAccess(final Switch action_finger, final String key){
+        final AlertDialog alertDialog = new AlertDialog.Builder(Setting.this).create();
+        action_finger.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if(isChecked){
+                    BiometricManager biometricManager = BiometricManager.from(Setting.this);
+                    switch (biometricManager.canAuthenticate()) {
+                        case BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE: {
+                            alertDialog.setTitle("ERROR");
+                            alertDialog.setMessage("YOUR DEVICE HAVE NO SCANNER PRINT");
+                            alertDialog.show();
+                            break;
+                        }
+                        case BiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE: {
+                            alertDialog.setTitle("ERROR");
+                            alertDialog.setMessage("YOUR SCANNER PRINT UNAVAILABLE");
+                            alertDialog.show();
+                            break;
+                        }
+                        case BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED: {
+                            alertDialog.setTitle("ERROR");
+                            alertDialog.setMessage("YOUR DEVICE HAVE NO FINGER, PLEASE ADD MORE FINGER PRINT");
+                            alertDialog.show();
+                            break;
+                        }
+                    }
+                    Executor executor = ContextCompat.getMainExecutor(Setting.this);
+                    final BiometricPrompt biometricPrompt = new BiometricPrompt(Setting.this, executor, new BiometricPrompt.AuthenticationCallback() {
+                        @Override
+                        public void onAuthenticationError(int errorCode, @NonNull CharSequence errString) {
+                            action_finger.setChecked(false);
+                            editor.putString(key,"no");
+                            editor.apply();
+                        }
+
+                        @Override
+                        public void onAuthenticationSucceeded(@NonNull BiometricPrompt.AuthenticationResult result) {
+                            editor.putString(key,"yes");
+                            editor.apply();
+                        }
+
+                        @Override
+                        public void onAuthenticationFailed() {
+                        }
+                    });
+                    final BiometricPrompt.PromptInfo promptInfo = new BiometricPrompt.PromptInfo.Builder()
+                            .setTitle("ALERT")
+                            .setDescription("place your finger print to scanner")
+                            .setNegativeButtonText("NO THANK")
+                            .build();
+                    biometricPrompt.authenticate(promptInfo);
+
+                } else {
+                    editor.putString(key,"no");
+                    editor.apply();
+                }
+
+            }
+        });
     }
 
     @Override
