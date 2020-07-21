@@ -18,11 +18,15 @@ import com.google.firebase.firestore.QuerySnapshot;
 import java.util.ArrayList;
 import java.util.List;
 
+import pl.droidsonroids.gif.GifImageView;
+
 public class SearchAll extends AppCompatActivity {
     ListView listView;
     SearchView searchView;
     List<Note> listNote;
     List<Note> searchList;
+    GifImageView gifImageView;
+    static ReloadListView reloadListView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,7 +34,11 @@ public class SearchAll extends AppCompatActivity {
         setContentView(R.layout.search_all);
         listView = findViewById(R.id.list_view_parent);
         searchView = findViewById(R.id.search_bar);
+        gifImageView = findViewById(R.id.loading_note);
+        reloadListView = new ReloadListView(this,listView,gifImageView);
+        listNote = new ArrayList<>();
         getAllNotes();
+        listNote();
 
         searchList = new ArrayList<Note>();
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
@@ -78,8 +86,16 @@ public class SearchAll extends AppCompatActivity {
         finish();
     }
 
-    public void getAllNotes(){
-        listNote = new ArrayList<Note>();
+    @Override
+    public void onBackPressed() {
+        finish();
+    }
+
+    public static void getAllNotes(){
+        reloadListView.reload();
+    }
+
+    public void listNote(){
         FirebaseFirestore firestore = FirebaseFirestore.getInstance();
         firestore.collection("notes").get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
             @Override
@@ -95,8 +111,6 @@ public class SearchAll extends AppCompatActivity {
                         Note note = new Note(id,title, date, content, color, checked);
                         listNote.add(note);
                     }
-                    Custom_ListView_ViewChild_Adapter adapter = new Custom_ListView_ViewChild_Adapter(listNote, R.layout.custom_item_listview, SearchAll.this);
-                    listView.setAdapter(adapter);
                 }
             }
         });

@@ -19,6 +19,7 @@ import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -28,6 +29,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CalendarView;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
@@ -36,6 +38,7 @@ import android.widget.TextView;
 
 import java.io.IOException;
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -68,18 +71,17 @@ public class MainActivity extends AppCompatActivity {
     private ListView listView;
     private CalendarView calendarView;
     private List<Note> listNote;
-
-    private List<Note> dailyNotes;
-
+    static int day1,month1,year1;
     private LinearLayout drag;
-    private TextView forecast;
-    private GifImageView iconWeather;
+    private TextView forecast, message;
+    private GifImageView iconWeather,loading_note;
     private LinearLayout scroll;
     FloatingActionButton floatingActionButton;
-    private int i = 0;
     LocationManager locationManager;
     LocationListener locationListener;
     double lon, lat;
+    static ReloadListView reloadListView;
+    ImageView add_by_day,setting;
 
     @SuppressLint("ResourceType")
     @Override
@@ -87,31 +89,43 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         sliding_layout = findViewById(R.id.sliding_layout);
+        message = findViewById(R.id.message);
         calendarView = findViewById(R.id.calendar);
         listView = findViewById(R.id.list_view_child);
+        loading_note = findViewById(R.id.loading_note);
         drag = findViewById(R.id.dragView);
         forecast = findViewById(R.id.forecast);
         iconWeather = findViewById(R.id.iconWeather);
         floatingActionButton = findViewById(R.id.fab);
         scroll = findViewById(R.id.scroll);
+        reloadListView = new ReloadListView(this,listView,loading_note);
         sliding_layout.setScrollableView(listView);
+        add_by_day = findViewById(R.id.add_by_day);
+        setting = findViewById(R.id.setting);
+        sliding_layout.getChildAt(1).setOnClickListener(null);
         sliding_layout.setFadeOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 sliding_layout.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
             }
         });
+        message.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(Intent.ACTION_VOICE_COMMAND)
+                        .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            }
+        });
         calendarView.setOnDateChangeListener(new CalendarView.OnDateChangeListener() {
             @Override
             public void onSelectedDayChange(@NonNull CalendarView view, int year, int month, int dayOfMonth) {
-                setDailyNotes(dayOfMonth,month,year);
+                day1 = dayOfMonth;
+                month1=month;
+                year1=year;
+                setDailyNotes();
                 sliding_layout.setPanelState(SlidingUpPanelLayout.PanelState.EXPANDED);
             }
         });
-
-        getDailyNotes();
-
-
         loadingWeather();
         iconWeather.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -120,6 +134,23 @@ public class MainActivity extends AppCompatActivity {
                 forecast.setText("");
             }
         });
+        add_by_day.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(getApplicationContext(), WriteNote.class);
+                intent.putExtra("saveNoteSign",100);
+                intent.putExtra("time",day1+"/"+(month1+1)+"/"+year1);
+                startActivity(intent);
+            }
+        });
+        setting.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(getApplicationContext(), Setting.class);
+                startActivity(intent);
+            }
+        });
+        listNote = new ArrayList<>();
 
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
@@ -136,6 +167,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void writeNote(View view) {
         Intent intent = new Intent(getApplicationContext(), WriteNote.class);
+        intent.putExtra("saveNoteSign",100);
         startActivity(intent);
     }
 
@@ -179,13 +211,8 @@ public class MainActivity extends AppCompatActivity {
                 } catch (ApiException exception) {
                     switch (exception.getStatusCode()) {
                         case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
-                            // Location settings are not satisfied. But could be fixed by showing the
-                            // user a dialog.
                             try {
-                                // Cast to a resolvable exception.
                                 ResolvableApiException resolvable = (ResolvableApiException) exception;
-                                // Show the dialog by calling startResolutionForResult(),
-                                // and check the result in onActivityResult().
                                 resolvable.startResolutionForResult(
                                         MainActivity.this,
                                         LocationRequest.PRIORITY_HIGH_ACCURACY);
@@ -259,52 +286,10 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void getDailyNotes() {
-        listNote = new ArrayList<Note>();
-        dailyNotes = new ArrayList<Note>();
-        FirebaseFirestore firestore = FirebaseFirestore.getInstance();
-        firestore.collection("notes").get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-            @Override
-            public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                if (task.isSuccessful()) {
-                    for (QueryDocumentSnapshot doc : task.getResult()) {
-                        String title = doc.get("title").toString();
-                        String date = doc.get("date").toString();
-                        String content = doc.get("content").toString();
-                        int color = Color.GREEN;
-                        boolean checked = Boolean.parseBoolean(doc.get("checked").toString());
-                        Note note = new Note(title, date, content, color, checked);
-                        listNote.add(note);
-                    }
-                    DateFormat simpleDateFormat = new SimpleDateFormat("dd/MM/yyyy");
-                    String s = simpleDateFormat.format(calendarView.getDate());
-                    dailyNotes.clear();
-                    for (Note note : listNote){
-                        if (note.getDate().equals(s)){
-                            dailyNotes.add(note);
-                        }
-                    }
-                    Custom_ListView_ViewChild_Adapter adapter = new Custom_ListView_ViewChild_Adapter(dailyNotes,
-                            R.layout.custom_item_listview, MainActivity.this);
-                    listView.setAdapter(adapter);
-                }
-            }
-        });
+    @SuppressLint("ResourceType")
+    public static void setDailyNotes() {
+        reloadListView.reload(day1,month1,year1);
     }
 
-    public void setDailyNotes(int day,int month, int year){
-        dailyNotes = new ArrayList<Note>();
-        dailyNotes.clear();
-        for (Note note : listNote){
-            String date = note.getDate();
-            String[] temp = date.split("/");
-            if ( (Integer.parseInt(temp[0]) == day) && (Integer.parseInt(temp[1]) == month+1) && (Integer.parseInt(temp[2]) == year) ){
-                dailyNotes.add(note);
-            }
-        }
-        Custom_ListView_ViewChild_Adapter adapter = new Custom_ListView_ViewChild_Adapter(dailyNotes,
-                R.layout.custom_item_listview, MainActivity.this);
-        listView.setAdapter(adapter);
-    }
 
 }

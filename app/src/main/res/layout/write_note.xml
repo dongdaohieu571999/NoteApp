@@ -9,7 +9,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
-        <GridLayout
+        <LinearLayout
             android:layout_width="match_parent"
             android:id="@+id/parentPanel"
             android:orientation="horizontal"
@@ -23,16 +23,37 @@
                 android:layout_gravity="left"
                 android:id="@+id/back_button"
                 android:src="@drawable/ic_back"/>
+            <RelativeLayout
+                android:layout_width="wrap_content"
+                android:layout_weight="1"
+                android:layout_height="match_parent">
+                <ImageView
+                    android:id="@+id/lock_icon"
+                    android:layout_width="wrap_content"
+                    android:src="@drawable/ic_lock"
+                    android:visibility="invisible"
+                    android:onClick="lockStatus"
+                    android:layout_centerInParent="true"
+                    android:layout_height="wrap_content"/>
+                <ImageView
+                    android:id="@+id/unlock_icon"
+                    android:onClick="lockStatus"
+                    android:layout_centerInParent="true"
+                    android:layout_width="wrap_content"
+                    android:src="@drawable/ic_unlock"
+                    android:layout_height="wrap_content"/>
+            </RelativeLayout>
+
             <ImageButton
                 android:id="@+id/saveNote"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:padding="30dp"
-                android:onClick="saveAndBack"
-                android:layout_gravity="right"
+                android:onClick="saveAndUpdate"
+                android:layout_alignParentRight="true"
                 android:background="@null"
                 android:src="@drawable/ic_done"/>
-        </GridLayout>
+        </LinearLayout>
         <RelativeLayout
             android:layout_marginLeft="24dp"
             android:layout_width="match_parent"
@@ -52,7 +73,6 @@
                 android:layout_toRightOf="@+id/day"
                 android:textSize="12dp"
                 android:id="@+id/countCharacter"/>
-
         </RelativeLayout>
         <EditText
             android:id="@+id/writeNote"

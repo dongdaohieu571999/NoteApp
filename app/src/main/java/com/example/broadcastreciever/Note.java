@@ -1,6 +1,8 @@
 package com.example.broadcastreciever;
 
-public class Note {
+import java.io.Serializable;
+
+public class Note implements Serializable {
     private String id;
     private String title;
     private String date;
